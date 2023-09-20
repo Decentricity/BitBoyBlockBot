@@ -7,6 +7,58 @@ import csv
 api_key = "Etherscan API key, see readme, wassie."
 base_url = "https://api.etherscan.io/api"
 
+# Your API key (replace with your actual key)
+API_KEY = "YourApiKeyToken"
+
+BASESCANAPI_URL = "https://api.basescan.org/api"
+
+def basescan_api(url):
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        return None
+
+def get_friendtech_addresses(ADDRESS):
+    url = f"{BASESCANAPI_URL}?module=account&action=txlist&address={ADDRESS}&startblock=0&endblock=99999999&sort=asc&apikey={API_KEY}"
+    api_response = basescan_api(url)
+    
+    unique_to_addresses = set()  # Using a set to automatically handle deduplication
+
+    if api_response and api_response.get('status') == "1":
+        transactions = api_response.get('result', [])
+        
+        if transactions:
+            for transaction in transactions:
+                from_address = transaction.get("from", "Unknown")
+                to_address = transaction.get("to", "Unknown")
+                
+                if from_address != to_address:
+                    unique_to_addresses.add(to_address)
+                    
+                    
+        else:
+            print("No transactions found.")
+    else:
+        print("Nothing on BaseScan.")
+
+    # Checking the first transaction for each unique TO address
+    final_addresses = []
+    for to_address in unique_to_addresses:
+        url = f"{BASESCANAPI_URL}?module=account&action=txlist&address={to_address}&startblock=0&endblock=99999999&sort=asc&apikey={API_KEY}&page=1&offset=1"
+        api_response = basescan_api(url)
+        
+        if api_response and api_response.get('status') == "1":
+            transactions = api_response.get('result', [])
+            
+            if transactions:
+                first_transaction = transactions[0]
+                if first_transaction.get("from") == ADDRESS:
+                    final_addresses.append(to_address)
+                    print(f"Found Friendtech address: {to_address}")
+    
+    return final_addresses
+
 def write_to_csv(data):
     with open('bitbot.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
@@ -30,7 +82,7 @@ def fetch_user_info(address: str, auth_token: str):
     }
     
     url = f"https://prod-api.kosetto.com/users/{address}"
-    #print(f"Fetching with headers: {headers}")  # Debugging line to check headers aw
+    #print(f"Fetching with headers: {headers}")  # Debugging line to check headers
     
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
@@ -87,23 +139,32 @@ def main():
     
     auth_token = "[FriendTech JWT token, see readme wassiefren]"
 
-    print("Fetching transactions wit ze etherscan... 🕵️‍♀️")
+    print("Fetching transactions... 🕵️‍♀️")
     data = fetch_token_transactions(target_address, api_key, base_url)
     
-    print("Extracting sender addies aw... 🎯")
+    print("Extracting sender addresses... 🎯")
     senders = list(extract_senders(data, target_address))
     
-    print("Fetching n processing user info... 🎭")
-    processed_data = fetch_and_process(senders, auth_token)
+    print("Going to BaseScan to find possible FriendTech addresses... 🛰️")
+    friendtech_senders = []  # Empty list to hold the converted addresses
+    
+    for sender in senders:
+        print(f"Checking {sender}:")
+        friendtech_address = get_friendtech_addresses(sender)  # Convert each sender to its FriendTech version
+        if friendtech_address:  # If conversion is successful, add to list
+            friendtech_senders.extend(friendtech_address)
+    
+    print("Fetching and processing user info... 🎭")
+    processed_data = fetch_and_process(friendtech_senders, auth_token)  # Use the converted addresses
     
     if processed_data:
-        print("Successful wassie has fetched user info:")
+        print("Successfully fetched user info:")
         print(json.dumps(processed_data, indent=4))
         
         print("Writing to CSV... 📝")
         write_to_csv(processed_data)
     else:
-        print(f"No user info found. Dis fridge is liek a ghost town! 👻")
-    
+        print(f"No user info found. It's like a ghost town in here! 👻")
 if __name__ == "__main__":
     main()
+
