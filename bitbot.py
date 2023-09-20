@@ -7,6 +7,7 @@ import csv
 api_key = "Etherscan API key, see readme, wassie."
 base_url = "https://api.etherscan.io/api"
 
+
 # Your API key (replace with your actual key)
 API_KEY = "YourApiKeyToken"
 
@@ -55,7 +56,7 @@ def get_friendtech_addresses(ADDRESS):
                 first_transaction = transactions[0]
                 if first_transaction.get("from") == ADDRESS:
                     final_addresses.append(to_address)
-                    print(f"Found Friendtech address: {to_address}")
+                    print(f"Found Base address initiated by the last address: {to_address}")
     
     return final_addresses
 
@@ -88,7 +89,7 @@ def fetch_user_info(address: str, auth_token: str):
     if response.status_code == 200:
         return response.json()
     else:
-        print(f"Error fetching data for address {address}: {response.status_code}, {response.text}")
+        print(f"No FriendTech user for {address}")
         return None
 
 
@@ -103,7 +104,7 @@ def fetch_and_process(senders: List[str], auth_token: str):
             processed_data.append({'address': address, 'data': user_info})
         else:
             print(f"No friendtech / twatter username for {address}")
-            processed_data.append({'address': address, 'data': {"message": "Address/User not found."}})
+            #processed_data.append({'address': address, 'data': {"message": "Address/User not found."}})
         # Optional: rate-limiting, so we don't overwhelm the API.
         time.sleep(0.1)
     return processed_data
@@ -137,9 +138,10 @@ def extract_senders(data, target_address):
 def main():
     target_address = "0xa6079bC88540cC9360D3c8D6f9cE583cdCcC3dC6" #Bitboy's addie
     
-    auth_token = "[FriendTech JWT token, see readme wassiefren]"
+    auth_token = "FriendTech JWT token, see readme wassiefren"
 
-    print("Fetching transactions... 🕵️‍♀️")
+
+    print("Fetching all transactions... 🕵️‍♀️")
     data = fetch_token_transactions(target_address, api_key, base_url)
     
     print("Extracting sender addresses... 🎯")
@@ -167,4 +169,3 @@ def main():
         print(f"No user info found. It's like a ghost town in here! 👻")
 if __name__ == "__main__":
     main()
-
