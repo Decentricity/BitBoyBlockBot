@@ -23,6 +23,8 @@
 * Under the storage section, click on the Local Storage dropdown and find the friend.tech entry
 * Copy the value of the jwt key
 
-(Just find the jwt here)
+(Here is wer u find the jwt)
+![image](https://github.com/Decentricity/BitBoyBlockBot/assets/76634353/aefd78de-e98c-4f05-9508-0aa1c537c284)
 
-![image](https://github.com/Decentricity/BitBoyBlockBot/assets/76634353/21d551b5-695a-4e7a-86dd-4f03ea87959f)
+
+
